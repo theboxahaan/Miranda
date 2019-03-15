@@ -16,7 +16,7 @@ cv2.imwrite("test.png", dst)
 
 
 
-```
+```python
 import glob
 import os
 import random
