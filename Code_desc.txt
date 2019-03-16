@@ -1,0 +1,27 @@
+
+
+1) As per the main process, 
+	-> Downscale the image size 
+	-> Find the Canny edges using cv2.Canny()
+	-> Find the Contours in this Canny image
+	-> Draw a box or roi covering the contours
+	-> Remove the ret of the picture other than the region of interest
+	-> This gives us just the signature to work with
+	-> Convert this image from RGB to GRAY scale
+	-> Create a mask using Adaptive Thresholding (cv2.adaptiveThreshold()) to get the background to black and the signature stokes to a different color
+
+Important OpenCV Algorithms used :
+1) cv2.dilate
+	Dilation is a basic morphological operation used to remove noise and to isolate individual elements in a given image.
+
+2) cv2.findContours	
+	To find the Contours in the image. As part of the pre-processing increasingly aggressive dilation is performed until there are a few connectd connected components
+
+3) cv2.Canny
+	This is to find the Canny edges in the image and in turn to detect the contours.
+
+4) cv2.adaptiveThreshold
+	It is used to separate desirable foreground image( signature ) from th background.
+
+	------------------------------------------------------------------
+	# Add how to make the background transparent and how to add it to the pdf
