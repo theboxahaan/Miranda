@@ -400,9 +400,9 @@ if __name__ == '__main__':
         if os.path.exists(out_path): continue
         try:
 ##            start = time.time()
-##            process_image(path, out_path)
+            process_image(path, out_path)
 ##            print(time.time() - start)
 ##            remove_background(out_path)
-            brightness()
+            #brightness()
         except Exception as e:
             print('%s %s' % (path, e))
