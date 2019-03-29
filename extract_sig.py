@@ -6,7 +6,6 @@ import random
 import math
 import json
 from collections import defaultdict
-
 import time
 
 import cv2
@@ -115,7 +114,7 @@ def find_components(edges, max_components=16):
         _, contours, hierarchy = cv2.findContours(dilated_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         count = len(contours)
     
-    print(dilation, n)
+##    print(dilation, n)
     #Image.fromarray(edges).show()
     #Image.fromarray(255 * dilated_image).show()
     return contours
@@ -264,8 +263,8 @@ def process_image(path, out_path):
     crop = pad_crop(crop, contours, edges, border_contour)
     print("pad_crop - > ", time.time() - pad_crop_start)
     crop = [int(x / scale) for x in crop]  # upscale to the original image size.
-    crop[0] -= 300
-    crop[1] -= 300
+    crop[0] -= 100
+    crop[1] -= 100
     crop[2] += 100
     crop[3] += 100
     text_im = orig_im.crop(crop)
@@ -290,6 +289,108 @@ def process_image(path, out_path):
     print('%s -> %s' % (path, out_path))
 
 
+##def brightness():
+##
+##    img = cv2.imread('11.jpg')
+##    print(img.shape)
+####    imghsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+####
+####
+####    imghsv[:,:,2] = [[max(pixel - 25, 0) if pixel < 190 else min(pixel + 25, 255) for pixel in row] for row in imghsv[:,:,2]]
+##    bright = np.ones(img.shape, np.uint8)*50
+##
+##    img += bright
+##    cv2.imwrite('test.jpg', img)
+##
+####    return cur_img
+####    print("Where")
+####    img = cv2.imread('9.jpg')
+####    print("are")
+####    rgb_planes = cv2.split(img)
+####
+####    result_planes = []
+####    result_norm_planes = []
+####    for plane in rgb_planes:
+####        dilated_img = cv2.dilate(plane, np.ones((7,7), np.uint8))
+####        bg_img = cv2.medianBlur(dilated_img, 21)
+####        diff_img = 255 - cv2.absdiff(plane, bg_img)
+####        #norm_img = cv2.normalize(diff_img, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+####        print("here")
+####        result_planes.append(diff_img)
+####        #result_norm_planes.append(norm_img)
+####        
+######    print("here")
+####    result = cv2.merge(result_planes)
+####    #result_norm = cv2.merge(result_norm_planes)
+####    print("yu")
+####    result = cv2.cvtColor(imghsv, cv2.COLOR_HSV2BGR)
+####    cv2.imwrite('shadows_out.jpg', result)
+####    #cv2.imwrite('shadows_out_norm.jpg', result_norm)
+####    print("Kif")
+####    #-----Reading the image-----------------------------------------------------
+####    img = cv2.imread('11.jpg')
+####    print(img.shape)
+######    cv2.imshow("img",img) 
+####
+####    #-----Converting image to LAB Color model----------------------------------- 
+####    lab= cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+######    cv2.imshow("lab",lab)
+####
+####    #-----Splitting the LAB image to different channels-------------------------
+####    l, a, b = cv2.split(lab)
+######    cv2.imshow('l_channel', l)
+######    cv2.imshow('a_channel', a)
+######    cv2.imshow('b_channel', b)
+####
+####    #-----Applying CLAHE to L-channel-------------------------------------------
+####    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+####    cl = clahe.apply(l)
+######    cv2.imshow('CLAHE output', cl)
+####
+####    #-----Merge the CLAHE enhanced L-channel with the a and b channel-----------
+####    limg = cv2.merge((cl,a,b))
+######    cv2.imshow('limg', limg)
+####
+####    #-----Converting image from LAB Color model to RGB model--------------------
+####    final = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+######    cv2.imshow('final', final)
+####    cv2.imwrite('shadows_out.jpg', final)
+####
+####    #_____END_____#    
+
+
+def brightness():
+
+    img = cv2.imread("11.jpg")
+
+    mean = img.mean()
+    print(mean)
+
+
+
+def remove_background(i):
+	img = Image.open(i)
+	img = img.convert("RGBA")
+	datas = img.getdata()
+
+	newData = []
+	for item in datas:
+	    if item[0] == 255 and item[1] == 255 and item[2] == 255:
+	        newData.append((255, 255, 255, 0))
+	    else:
+	        if item[0] > 150:
+	            newData.append((0, 0, 0, 255))
+	        else:
+	            newData.append(item)
+	            #print(item)
+
+
+	img.putdata(newData)
+	img.save(i.split(".")[0]+".png", "PNG")
+	print(i)
+	print("Saved")
+
+
 if __name__ == '__main__':
     # List the files for which Signature is to be detected
     files = ["11.jpg"]#, "12.jpg", "13.jpg", "14.jpg"]
@@ -298,8 +399,10 @@ if __name__ == '__main__':
         #out_path = path.replace('.png', '.crop.png')  # .png as input
         if os.path.exists(out_path): continue
         try:
-            start = time.time()
-            process_image(path, out_path)
-            print(time.time() - start)
+##            start = time.time()
+##            process_image(path, out_path)
+##            print(time.time() - start)
+##            remove_background(out_path)
+            brightness()
         except Exception as e:
             print('%s %s' % (path, e))
