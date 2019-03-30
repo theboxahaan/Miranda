@@ -224,8 +224,8 @@ def downscale_image(im, max_dim=2048):
 
 
 def process_image(path, out_path):
-
-    orig_im = Image.open(path)
+    temp = increase_brightness(path)
+    orig_im = Image.open("bright.jpg")
     scale, im = downscale_image(orig_im)
 
     edges = cv2.Canny(np.asarray(im), 100, 200)
@@ -263,11 +263,8 @@ def process_image(path, out_path):
     crop = pad_crop(crop, contours, edges, border_contour)
     print("pad_crop - > ", time.time() - pad_crop_start)
     crop = [int(x / scale) for x in crop]  # upscale to the original image size.
-    crop[0] -= 100
-    crop[1] -= 100
-    crop[2] += 100
-    crop[3] += 100
     text_im = orig_im.crop(crop)
+    temp = orig_im.crop(crop)
     text_im = np.array(text_im)
     imgSize = np.shape(text_im)
     new_mask = np.zeros(imgSize, dtype="uint8")
@@ -284,89 +281,40 @@ def process_image(path, out_path):
 
     text_im = cv2.bitwise_and(text_im, text_im, mask=rmask)
 
-    text_im[np.where((text_im!=[0,0,0]).all(axis=2))] = [205, 171, 33]
-    cv2.imwrite(out_path, text_im)
+##    text_im[np.where((text_im!=[0,0,0]).all(axis=2))] = [205, 171, 33]
+    fgbg = cv2.createBackgroundSubtractorMOG2(128,cv2.THRESH_BINARY,1)
+    masked_image = fgbg.apply(text_im)
+
+    masked_image[masked_image==127]=0
+    masked_image = cv2.bitwise_not(masked_image)
+    masked_image = cv2.cvtColor(masked_image, cv2.COLOR_GRAY2RGB)
+    masked_image = cv2.bitwise_and(masked_image, np.array(temp))
+    masked_image = cv2.cvtColor(masked_image, cv2.COLOR_BGR2RGB)
+
+    cv2.imwrite(out_path, masked_image)
     print('%s -> %s' % (path, out_path))
 
-
-##def brightness():
-##
-##    img = cv2.imread('11.jpg')
-##    print(img.shape)
-####    imghsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-####
-####
-####    imghsv[:,:,2] = [[max(pixel - 25, 0) if pixel < 190 else min(pixel + 25, 255) for pixel in row] for row in imghsv[:,:,2]]
-##    bright = np.ones(img.shape, np.uint8)*50
-##
-##    img += bright
-##    cv2.imwrite('test.jpg', img)
-##
-####    return cur_img
-####    print("Where")
-####    img = cv2.imread('9.jpg')
-####    print("are")
-####    rgb_planes = cv2.split(img)
-####
-####    result_planes = []
-####    result_norm_planes = []
-####    for plane in rgb_planes:
-####        dilated_img = cv2.dilate(plane, np.ones((7,7), np.uint8))
-####        bg_img = cv2.medianBlur(dilated_img, 21)
-####        diff_img = 255 - cv2.absdiff(plane, bg_img)
-####        #norm_img = cv2.normalize(diff_img, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
-####        print("here")
-####        result_planes.append(diff_img)
-####        #result_norm_planes.append(norm_img)
-####        
-######    print("here")
-####    result = cv2.merge(result_planes)
-####    #result_norm = cv2.merge(result_norm_planes)
-####    print("yu")
-####    result = cv2.cvtColor(imghsv, cv2.COLOR_HSV2BGR)
-####    cv2.imwrite('shadows_out.jpg', result)
-####    #cv2.imwrite('shadows_out_norm.jpg', result_norm)
-####    print("Kif")
-####    #-----Reading the image-----------------------------------------------------
-####    img = cv2.imread('11.jpg')
-####    print(img.shape)
-######    cv2.imshow("img",img) 
-####
-####    #-----Converting image to LAB Color model----------------------------------- 
-####    lab= cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-######    cv2.imshow("lab",lab)
-####
-####    #-----Splitting the LAB image to different channels-------------------------
-####    l, a, b = cv2.split(lab)
-######    cv2.imshow('l_channel', l)
-######    cv2.imshow('a_channel', a)
-######    cv2.imshow('b_channel', b)
-####
-####    #-----Applying CLAHE to L-channel-------------------------------------------
-####    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
-####    cl = clahe.apply(l)
-######    cv2.imshow('CLAHE output', cl)
-####
-####    #-----Merge the CLAHE enhanced L-channel with the a and b channel-----------
-####    limg = cv2.merge((cl,a,b))
-######    cv2.imshow('limg', limg)
-####
-####    #-----Converting image from LAB Color model to RGB model--------------------
-####    final = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
-######    cv2.imshow('final', final)
-####    cv2.imwrite('shadows_out.jpg', final)
-####
-####    #_____END_____#    
-
-
-def brightness():
-
-    img = cv2.imread("11.jpg")
-
+def increase_brightness(img, value=50):
+    img = cv2.imread(img)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    h, s, v = cv2.split(hsv)
+    
     mean = img.mean()
-    print(mean)
+    if mean > 155:
+        v[v > mean*0.7] = 255
+        v[v <= mean*0.7] = 0
 
+    final_hsv = cv2.merge((h, s, v))
+    img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+    img[np.where((img==[0,0,0]).all(axis=2))] = [255, 255, 255]
+    
+    cv2.imwrite("bright.jpg", img)
+    return img
 
+def mean(path):
+    img = cv2.imread(path)
+    mean = img.mean()
+    print(path, mean)
 
 def remove_background(i):
 	img = Image.open(i)
@@ -393,16 +341,13 @@ def remove_background(i):
 
 if __name__ == '__main__':
     # List the files for which Signature is to be detected
-    files = ["11.jpg"]#, "12.jpg", "13.jpg", "14.jpg"]
+    files = ["10.jpg"]
+##    files = ["7.jpg", "8.jpg", "9.jpg", "10.jpg", "11.jpg", "12.jpg", "13.jpg", "14.jpg", "15.jpg","16.jpg", "17.jpg", "18.jpg"]
     for path in files:
         out_path = path.replace('.jpg', '_sig_detected.jpg')
         #out_path = path.replace('.png', '.crop.png')  # .png as input
         if os.path.exists(out_path): continue
         try:
-##            start = time.time()
             process_image(path, out_path)
-##            print(time.time() - start)
-##            remove_background(out_path)
-            #brightness()
         except Exception as e:
             print('%s %s' % (path, e))
